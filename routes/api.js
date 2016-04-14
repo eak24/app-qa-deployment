@@ -10,7 +10,7 @@ var url = require('url');
 var async = require('async');
 
 var platformPath = process.env.ONSHAPE_PLATFORM;
-console.log('Platform Path :: ', platformPath);
+// console.log('Platform Path :: ', platformPath);
 
 var client;
 if (process.env.REDISTOGO_URL) {
@@ -72,9 +72,11 @@ var getSession = function(req, res) {
         getSession(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting session: ', err);
+        sendError(res, err);
       });
     } else {
       console.log('GET /api/users/session error: ', data);
+      sendError(res, data);
     }
   });
 };
@@ -95,9 +97,11 @@ var getDocuments = function(req, res) {
         getDocuments(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting documents: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/documents error: ', data);
+      console.log('GET /api/documents error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -122,9 +126,11 @@ var getElementList = function(req, res) {
         getElementList(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting elements: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/documents/elements error: ', data);
+      console.log('GET /api/documents/elements error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -149,9 +155,11 @@ var getAssemblyList = function(req, res) {
         getElementList(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting elements: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/documents/elements ?type=assembly error: ', data);
+      console.log('GET /api/documents/elements ?type=assembly error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -178,9 +186,11 @@ var getShadedView = function(req, res) {
         getShadedView(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting shaded view: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/assemblies/shadedviews error: ', data);
+      console.log('GET /api/assemblies/shadedviews error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -200,9 +210,11 @@ var getBoundingBox = function(req, res) {
         getBoundingBox(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting bounding box: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/assemblies/boundingbox error: ', data);
+      console.log('GET /api/assemblies/boundingbox error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -288,9 +300,11 @@ var getStudioMetadata = function(req, res) {
         getMetadata(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting partstudio metadata: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/partstudios/metadata error: ', data);
+      console.log('GET /api/partstudios/metadata error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -310,9 +324,11 @@ var getExternalStudioMetadata = function(req, res) {
         getMetadata(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting external partstudio metadata: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/partstudios/metadata error: ', data);
+      console.log('GET /api/partstudios/metadata error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -345,9 +361,11 @@ var setWebhooks = function(req, res) {
         setWebhooks(req, res);
       }).catch(function(err) {
         console.log('*** Error refreshing token or setting webhooks: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('*** POST /api/webhooks error: ', data);
+      console.log('*** POST /api/webhooks error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -411,9 +429,11 @@ var getAccounts = function(req, res) {
         getElementList(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting accounts: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/accounts/purchases error: ', data);
+      console.log('GET /api/accounts/purchases error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -435,9 +455,11 @@ var getWorkspace = function(req, res) {
         getElementList(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting workspace: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/documents/workspaces error: ', data);
+      console.log('GET /api/documents/workspaces error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
@@ -459,16 +481,18 @@ var getVersions = function(req, res) {
         getElementList(req, res);
       }).catch(function(err) {
         console.log('Error refreshing token or getting versions: ', err);
+        sendError(res, err);
       });
     } else {
-      console.log('GET /api/documents/versions error: ', data);
+      console.log('GET /api/documents/versions error: ', data.statusCode);
+      sendError(res, data);
     }
   });
 };
 
 var addPartStudio = function(req, res) {
   request.post({
-    uri: process.env.ONSHAPE_PLATFORM + '/api/partstudios/d/' + req.query.documentId + '/w/' + req.query.workspaceId,
+    uri: platformPath + '/api/partstudios/d/' + req.query.documentId + '/w/' + req.query.workspaceId,
     body: {
       name : req.query.name
     },
@@ -483,33 +507,50 @@ var addPartStudio = function(req, res) {
       authentication.refreshOAuthToken(req, res).then(function() {
         addPartStudio(req, res);
       }).catch(function(err) {
-        console.log('*** Error refreshing token or inserting new partstudio: ', err);
+        console.log('*** Error refreshing token or inserting new partstudio');
+        sendError(res, err);
       });
     } else {
-      console.log('*** POST /api/partstudios error: ', data);
+      console.log('*** POST /api/partstudios error: ' + data.statusCode);
+      sendError(res, data);
     }
   });
 };
 
 var delElement = function(req, res) {
   request.del({
-    uri: process.env.ONSHAPE_PLATFORM + '/api/documents/d/' + req.query.documentId + '/w/' + req.query.workspaceId + '/e/' + req.query.elementId,
+    uri: platformPath + '/api/elements/d/' + req.query.documentId + '/w/' + req.query.workspaceId + '/e/' + req.query.elementId,
     headers: {
       'Authorization': 'Bearer ' + req.user.accessToken
     }
   }).then(function(data) {
-    res.send(data);
+    res.send(true);
   }).catch(function(data) {
     if (data.statusCode === 401) {
       authentication.refreshOAuthToken(req, res).then(function() {
         delElement(req, res);
       }).catch(function(err) {
-        console.log('*** Error refreshing token or deleting element: ', err);
+        console.log('*** Error refreshing token or deleting element');
+        sendError(res, err);
       });
     } else {
-      console.log('*** DELETE /api/documents error: ', data);
+      console.log('*** DELETE /api/documents error (' + data.statusCode + ')');
+      sendError(res, data);
     }
   });
+}
+
+function sendError(res, data) {
+  if (typeof data.statusCode === 'number') {
+    res.status(data.statusCode);
+  } else {
+    res.status(400);
+  }
+  if (typeof data === 'string') {
+    res.send(data);
+  } else {
+    res.send('Received error from server');
+  }
 }
 
 router.get('/documents', getDocuments);

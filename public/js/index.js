@@ -2,7 +2,6 @@
 // global data
 
 var theContext = {};
-var ResultTable;
 
 ////////////////////////////////////////////////////////////////
 // startup
@@ -24,10 +23,7 @@ $(document).ready(function() {
   theContext.verison = 0;
   theContext.microversion = 0;
 
-  refreshContextElements(0);
-
-  // Hide the UI elements we don't need right now
-  // uiDisplay('off', 'on');
+  refreshContextElements();
 });
 
 function onListDocuments() {
@@ -35,9 +31,9 @@ function onListDocuments() {
   $.ajax('/api/documents', {
     dataType: 'json',
     type: 'GET',
-    // cache: false,
     success: function(data) {
       $("#document-list").append('Got ' + data.items.length + ' documents');
+      $("#document-list").append('<br>NOTE: Currently no pagination');
     },
     error: function(data) {
       $("#document-list").append('Got error <pre>' + JSON.stringify(data, null, 2) + '</pre>');
@@ -47,45 +43,75 @@ function onListDocuments() {
 
 function onCreatePS() {
   $("#create-ps").empty();
+  $("#create-ps").append('Checking for existing element...');
   $.ajax('/api/elements'+
     "?documentId=" + theContext.documentId +
     "&workspaceId=" + theContext.workspaceId, {
     dataType: 'json',
     type: 'GET',
-    cache: false,
     success: function(data) {
       for (var i = 0; i < data.length; i++) {
         if (data[i].name == 'QA PartStudio') {
-          $("#create-ps").append('Already have QA PartStudio');
-          return;
+          $("#create-ps").append('<br>Already have QA PartStudio (' + data[i].id + ')');
+          return data[i];
         }
       }
+      $("#create-ps").append('<br>Creating new QA Partstudio...');
+      return $.ajax('/api/newps' +
+        "?documentId=" + theContext.documentId +
+        "&workspaceId=" + theContext.workspaceId +
+        "&name=QA+PartStudio",
+        {
+          dataType: 'json',
+          type: 'GET',
+          success: function(data) {
+            $("#create-ps").append('<br>Created QA PartStudio (' + data.id + ')');
+          },
+          error: function(data) {
+            $("#create-ps").append('<br>Got error creating partstudio: <pre>' + JSON.stringify(data, null, 2) + '</pre>');
+          }
+        });
     },
     error: function(data) {
-      $("#create-ps").append('Got error checking elements <pre>' + JSON.stringify(data, null, 2) + '</pre>');
+      $("#create-ps").append('<br>Got error checking elements <pre>' + JSON.stringify(data, null, 2) + '</pre>');
     }
-  }).then(function() {
-    $.ajax('/api/newps' +
-      "?documentId=" + theContext.documentId +
-      "&workspaceId=" + theContext.workspaceId +
-      "&name=QA+PartStudio",
-      {
-        dataType: 'json',
-        type: 'GET',
-        cache: false,
-        success: function(data) {
-          $("#create-ps").append('QA PartStudio Created!');
-        },
-        error: function(data) {
-          $("#create-ps").append('Got error creating partstudio: <pre>' + JSON.stringify(data, null, 2) + '</pre>');
-        }
-      });
   });
 }
 
 function onDeletePS() {
   $("#delete-ps").empty();
-  $("#delete-ps").append('NOT DONE YET');
+  $("#delete-ps").append('Checking for existing element...');
+  $.ajax('/api/elements'+
+    "?documentId=" + theContext.documentId +
+    "&workspaceId=" + theContext.workspaceId, {
+    dataType: 'json',
+    type: 'GET',
+    success: function(data) {
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].name == 'QA PartStudio') {
+          $("#delete-ps").append('<br>Found PartStudio... deleting...');
+          return $.ajax('/api/delelement' +
+            "?documentId=" + theContext.documentId +
+            "&workspaceId=" + theContext.workspaceId +
+            "&elementId=" + data[i].id,
+            {
+              dataType: 'json',
+              type: 'GET',
+              success: function() {
+                $("#delete-ps").append('<br>Deleted QA PartStudio');
+              },
+              error: function(data) {
+                $("#delete-ps").append('<br>Got error deleting partstudio: <pre>' + JSON.stringify(data, null, 2) + '</pre>');
+              }
+            });
+        }
+      }
+      $("#delete-ps").append('<br>No QA PartStudio to delete');
+    },
+    error: function(data) {
+      $("#delete-ps").append('<br>Got error checking elements for deletion<pre>' + JSON.stringify(data, null, 2) + '</pre>');
+    }
+  });
 }
 
 // Send message to Onshape
@@ -201,19 +227,18 @@ function displayAlert(message) {
 //
 // Update the list of elements in the context object
 //
-function refreshContextElements(selectedIndexIn) {
-
+function refreshContextElements() {
   // First, show our session info
   $('#session-info').empty();
   $.ajax('/api/session', {
     dataType: 'json',
     type: 'GET',
-    cache: false,
+    // cache: false,
     success: function(data) {
-      if (typeof data.email === 'undefined') {
-        $('#session-info').append('<b>No PII Data</b><br>');
-      } else {
+      if (data.email) {
         $('#session-info').append('<b>Got PII Data</b><br>');
+      } else {
+        $('#session-info').append('<b>*** No PII Data</b><br>');
       }
       $('#session-info').append('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
     },
