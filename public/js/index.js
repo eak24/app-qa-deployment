@@ -2,6 +2,8 @@
 // global data
 
 var theContext = {};
+var bubbleIndex = 0;
+var itemSelectedReceived = false;
 
 ////////////////////////////////////////////////////////////////
 // startup
@@ -15,6 +17,8 @@ $(document).ready(function() {
   $("#element-list-docs").button().click(onListDocuments);
   $("#element-create-ps").button().click(onCreatePS);
   $("#element-delete-ps").button().click(onDeletePS);
+  $("#open-select-item").button().click(onSelectItem);
+  $("#show-message-bubble").button().click(onShowMessageBubble);
 
   // Hold onto the current session information
   theContext.documentId = theQuery.documentId;
@@ -114,13 +118,56 @@ function onDeletePS() {
   });
 }
 
-// Send message to Onshape
+function onSelectItem() {
+  $("#select-item").empty();
+  $("#select-item").append('Opened select item dialog...');
+  var msg = { messageName: 'openSelectItemDialog',
+              dialogTitle: 'This is my select item dialogue',
+              selectBlobs: true,
+              selectParts: true,
+              selectPartStudios: true,
+              selectAssemblies: true,
+              selectMultiple: false,
+              selectBlobMimeTypes: 'application/dwt,image/jpeg' };
+  itemSelectedReceived = false;
+  sendConfigurableMessage(msg);
+}
+
+function onItemSelected(msg) {
+  $("#select-item").empty();
+  $("#select-item").append('<pre>' + JSON.stringify(msg, null, 2) + '</pre>');
+  itemSelectedReceived = true;
+}
+
+function onSelectItemClosed() {
+  if (!itemSelectedReceived) {
+    $("#select-item").empty();
+  }
+}
+
+function onShowMessageBubble() {
+  bubbleIndex++;
+  var msg = { messageName: 'showMessageBubble',
+              message: 'This is message #' + bubbleIndex };
+  sendConfigurableMessage(msg);
+}
+
+// Send a simple message to Onshape
 function sendMessage(msgName) {
   var msg = {};
   msg['documentId'] = theContext.documentId;
   msg['workspaceId'] = theContext.workspaceId;
   msg['elementId'] =  theContext.elementId;
   msg['messageName'] = msgName;
+
+  parent.postMessage(msg, '*');
+}
+
+// Send a configurable message to Onshape
+function sendConfigurableMessage(msg) {
+  msg['documentId'] = theContext.documentId;
+  msg['workspaceId'] = theContext.workspaceId;
+  msg['elementId'] =  theContext.elementId;
 
   parent.postMessage(msg, '*');
 }
@@ -178,6 +225,10 @@ function handlePostMessage(e) {
     onShow();
   } else if (e.data.messageName === 'hide') {
     onHide();
+  } else if (e.data.messageName === 'itemSelectedInSelectItemDialog') {
+    onItemSelected(e.data);
+  } else if (e.data.messageName === 'selectItemDialogClosed') {
+    onSelectItemClosed();
   }
 };
 
