@@ -4,6 +4,8 @@
 var theContext = {};
 var bubbleIndex = 0;
 var itemSelectedReceived = false;
+var itemConfiguredReceived = false;
+var itemLastSelected = null;
 
 ////////////////////////////////////////////////////////////////
 // startup
@@ -18,6 +20,9 @@ $(document).ready(function() {
   $("#element-create-ps").button().click(onCreatePS);
   $("#element-delete-ps").button().click(onDeletePS);
   $("#open-select-item").button().click(onSelectItem);
+  $("#close-select-item").button().click(onCloseSelectItem).hide();
+  $("#open-configure-item").button().click(onConfigureItem);
+  $("#close-configure-item").button().click(onCloseConfigureItem).hide();
   $("#show-message-bubble").button().click(onShowMessageBubble);
 
   // Hold onto the current session information
@@ -129,6 +134,8 @@ function onSelectItem() {
               selectAssemblies: true,
               selectMultiple: false,
               selectBlobMimeTypes: 'application/dwt,image/jpeg' };
+
+  $("#close-select-item").show();
   itemSelectedReceived = false;
   sendConfigurableMessage(msg);
 }
@@ -137,11 +144,63 @@ function onItemSelected(msg) {
   $("#select-item").empty();
   $("#select-item").append('<pre>' + JSON.stringify(msg, null, 2) + '</pre>');
   itemSelectedReceived = true;
+  lastItemSelected = msg;
+  if (lastItemSelected.elementType === 'partstudio') {
+    $("#open-configure-item").prop('disabled', false);
+    $("#configure-item").empty();
+  } else {
+    $("#open-configure-item").prop('disabled', true);
+  }
+}
+
+function onCloseSelectItem() {
+  var msg = { messageName: 'closeSelectItemDialog' };
+  sendConfigurableMessage(msg);
 }
 
 function onSelectItemClosed() {
+  $("#close-select-item").hide();
   if (!itemSelectedReceived) {
     $("#select-item").empty();
+  }
+}
+
+function onConfigureItem() {
+  $("#configure-item").empty();
+  console.log('last item: ', lastItemSelected);
+  if (lastItemSelected) {
+    var msg = { messageName: 'openConfigureItemDialog',
+                dialogTitle: 'This is my configure item dialogue',
+                restrictToDocumentId: lastItemSelected.documentId,
+                restrictToMicroversionId: lastItemSelected.documentMicroversionId,
+                restrictToVersionId: lastItemSelected.versionId,
+                restrictToElementId: lastItemSelected.elementId,
+                restrictToIdTag: lastItemSelected.idTag,
+                elementConfiguration: lastItemSelected.elementConfiguration,
+                selectPartStudios: true,
+                selectParts: true };
+    $("#configure-item").append('Opened configure item dialog...');
+    $("#close-configure-item").show();
+    itemConfiguredReceived = false;
+    sendConfigurableMessage(msg);
+  }
+}
+
+function onItemConfigured(msg) {
+  $("#configure-item").empty();
+  $("#configure-item").append('<pre>' + JSON.stringify(msg, null, 2) + '</pre>');
+  itemConfiguredReceived = true;
+}
+
+function onCloseConfigureItem() {
+  var msg = { messageName: 'closeConfigureItemDialog' };
+  sendConfigurableMessage(msg);
+}
+
+function onConfigureItemClosed() {
+  $("#close-configure-item").hide();
+  if (!itemConfiguredReceived) {
+    $("#configure-item").empty();
   }
 }
 
@@ -227,8 +286,12 @@ function handlePostMessage(e) {
     onHide();
   } else if (e.data.messageName === 'itemSelectedInSelectItemDialog') {
     onItemSelected(e.data);
+  } else if (e.data.messageName === 'itemConfiguredInConfigureItemDialog') {
+    onItemConfigured(e.data);
   } else if (e.data.messageName === 'selectItemDialogClosed') {
     onSelectItemClosed();
+  } else if (e.data.messageName === 'configureItemDialogClosed') {
+    onConfigureItemClosed();
   }
 };
 

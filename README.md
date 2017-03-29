@@ -45,7 +45,7 @@ Startup the local server
 
 Create a new document in Onshape, then open '+'->'Create Application ...'
 
-In the URL field put 'http://localhost:3001/oauthRedirect', and hit 'OK'
+In the URL field put 'http://localhost:3001/oauthSignin', and hit 'OK'
 
 ####**Deploying to Heroku**
 Make sure you have Node.js and the Heroku Toolbelt installed. You will also need a Heroku account
