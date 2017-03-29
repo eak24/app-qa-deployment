@@ -19,14 +19,18 @@ Github settings):
     $ git clone https://github.com/onshape/app-qa.git app-qa-local
 
 Register the new app on local newton (no dev-portal required)
+In the instructions below, the placeholder <MYHOST> should be set to the name of the host used for onshape. This is
+normally the setting of hostname in $STAGE/config/host.properties. If you are not using a local drawings server you
+probably are, by default, using localhost.
+
 * Admin tools->Applications->Add Application
 
     Name (ex: Onshape QA Sample Local)
     Developer (ex: btadmin@onshape.com)
     Primary format (ex: Onshape-Demo/QA-Local)
     Description (one sentence; ex: "Onshape QA Sample application — source code is available.")
-    Redirect URLs: http://localhost:3001/oauthRedirect
-    Base HREF: https://localhost:3001/oauthSignin (doesn't really matter as we'll use the application add link)
+    Redirect URLs: http://<MYHOST>:3001/oauthRedirect
+    Base HREF: https://<MYHOST>:3001/oauthSignin (doesn't really matter as we'll use the application add link)
 
 Ensure npm is setup
 
@@ -36,8 +40,8 @@ Set the client and server environment variables for running
 
     $ export OAUTH_CLIENT_ID=FILL_THIS_IN
     $ export OAUTH_CLIENT_SECRET=FILL_THIS_IN
-    $ export ONSHAPE_HOST=http://localhost:3001
-    $ export ONSHAPE_PLATFORM=http://localhost:8080
+    $ export ONSHAPE_HOST=http://<MYHOST>:3001
+    $ export ONSHAPE_PLATFORM=http://<MYHOST>:8080
 
 Startup the local server
 
@@ -45,7 +49,7 @@ Startup the local server
 
 Create a new document in Onshape, then open '+'->'Create Application ...'
 
-In the URL field put 'http://localhost:3001/oauthRedirect', and hit 'OK'
+In the URL field put 'http://<MYHOST>:3001/oauthSignin', and hit 'OK'
 
 ####**Deploying to Heroku**
 Make sure you have Node.js and the Heroku Toolbelt installed. You will also need a Heroku account
